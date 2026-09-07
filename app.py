@@ -24,8 +24,7 @@ st.write("Compare development indicators between two countries.")
 # Put World_development_mesurement.csv in the SAME folder as app.py
 
 BASE_DIR = Path(__file__).parent
-FILE_PATH = BASE_DIR / "World_development_mesurement.csv"
-
+FILE_PATH = BASE_DIR / r"C:\Users\LENOVO\Downloads\World_development_mesurement.xlsx"
 if not FILE_PATH.exists():
     st.error("❌ Dataset file not found.")
     st.info(
