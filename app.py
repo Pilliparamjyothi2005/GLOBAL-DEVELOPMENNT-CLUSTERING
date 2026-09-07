@@ -12,52 +12,79 @@ st.set_page_config(
     layout="wide"
 )
 
+# =========================================================
+# TITLE
+# =========================================================
+
 st.title("🌍 Global Development Dashboard")
 st.write("Compare development indicators between two countries.")
 
 # =========================================================
-# LOAD EXCEL FILE
+# LOAD CSV DATASET
 # =========================================================
 
-FILE_NAME = "World_development_mesurement.xlsx"
+FILE_NAME = "World_development_mesurement.csv"
 FILE_PATH = Path(__file__).parent / FILE_NAME
 
 if not FILE_PATH.exists():
-    st.error("❌ Excel file not found!")
-    st.write("The following file is required:")
+    st.error("❌ Dataset file not found.")
+
+    st.write("Please make sure this file is in the same GitHub folder as app.py:")
+
     st.code(FILE_NAME)
-    st.write("Please upload this Excel file to the same GitHub folder as app.py.")
+
+    st.write("Your GitHub repository should contain:")
+
+    st.code(
+        """
+app.py
+requirements.txt
+World_development_mesurement.csv
+"""
+    )
+
     st.stop()
 
 try:
-    df = pd.read_excel(FILE_PATH, engine="openpyxl")
 
-except ImportError:
-    st.error("❌ openpyxl is not installed.")
-    st.info(
-        "Add the following to your requirements.txt file:\n\n"
-        "streamlit\n"
-        "pandas\n"
-        "openpyxl==3.1.5"
-    )
-    st.stop()
+    df = pd.read_csv(FILE_PATH)
 
 except Exception as e:
-    st.error("❌ Could not read the Excel file.")
+
+    st.error("❌ Could not read the CSV file.")
+
     st.error(f"Error: {e}")
+
     st.stop()
 
-# Clean column names
-df.columns = df.columns.astype(str).str.strip()
+# =========================================================
+# CLEAN COLUMN NAMES
+# =========================================================
+
+df.columns = (
+    df.columns
+    .astype(str)
+    .str.strip()
+)
 
 # =========================================================
-# CHECK COUNTRY COLUMN
+# CHECK DATASET
 # =========================================================
+
+if df.empty:
+
+    st.error("❌ The dataset is empty.")
+
+    st.stop()
 
 if "Country" not in df.columns:
-    st.error("❌ 'Country' column was not found in the Excel file.")
-    st.write("Columns found in your Excel file:")
+
+    st.error("❌ The dataset does not contain a 'Country' column.")
+
+    st.write("Columns found in your dataset:")
+
     st.write(list(df.columns))
+
     st.stop()
 
 # =========================================================
@@ -73,7 +100,9 @@ countries = sorted(
 )
 
 if len(countries) < 2:
+
     st.error("❌ At least two countries are required.")
+
     st.stop()
 
 # =========================================================
@@ -85,6 +114,7 @@ st.subheader("🌎 Select Two Countries for Comparison")
 col1, col2 = st.columns(2)
 
 with col1:
+
     country1 = st.selectbox(
         "Select First Country",
         countries,
@@ -92,6 +122,7 @@ with col1:
     )
 
 with col2:
+
     country2 = st.selectbox(
         "Select Second Country",
         countries,
@@ -111,18 +142,25 @@ data2 = df[
 ]
 
 if data1.empty:
+
     st.error(f"❌ No data found for {country1}.")
+
     st.stop()
 
 if data2.empty:
+
     st.error(f"❌ No data found for {country2}.")
+
     st.stop()
 
+# Use first row if multiple rows exist
+
 country_data1 = data1.iloc[0]
+
 country_data2 = data2.iloc[0]
 
 # =========================================================
-# HELPER FUNCTIONS
+# HELPER FUNCTION
 # =========================================================
 
 def convert_value(value):
@@ -141,104 +179,130 @@ def convert_value(value):
         )
 
         try:
+
             return float(value)
+
         except ValueError:
+
             return None
 
     try:
+
         return float(value)
 
     except (ValueError, TypeError):
+
         return None
 
 
 def display_value(value):
 
     if pd.isna(value):
+
         return "N/A"
 
     if isinstance(value, (int, float)):
+
         return f"{value:,.2f}"
 
     return str(value)
 
 
 # =========================================================
-# BASIC COUNTRY DETAILS
+# BASIC COUNTRY INFORMATION
 # =========================================================
 
 st.header("📊 Country Comparison")
 
 col1, col2 = st.columns(2)
 
+# =========================================================
+# COUNTRY 1
+# =========================================================
+
 with col1:
 
     st.subheader(f"🌍 {country1}")
 
     if "GDP" in df.columns:
+
         st.metric(
             "GDP",
             display_value(country_data1["GDP"])
         )
 
     if "Population Total" in df.columns:
+
         st.metric(
             "Population",
             display_value(country_data1["Population Total"])
         )
 
     if "Internet Usage" in df.columns:
+
         st.metric(
             "Internet Usage",
             display_value(country_data1["Internet Usage"])
         )
 
     if "Life Expectancy Male" in df.columns:
+
         st.metric(
             "Life Expectancy Male",
             display_value(country_data1["Life Expectancy Male"])
         )
 
     if "Life Expectancy Female" in df.columns:
+
         st.metric(
             "Life Expectancy Female",
             display_value(country_data1["Life Expectancy Female"])
         )
 
 
+# =========================================================
+# COUNTRY 2
+# =========================================================
+
 with col2:
 
     st.subheader(f"🌍 {country2}")
 
     if "GDP" in df.columns:
+
         st.metric(
             "GDP",
             display_value(country_data2["GDP"])
         )
 
     if "Population Total" in df.columns:
+
         st.metric(
             "Population",
             display_value(country_data2["Population Total"])
         )
 
     if "Internet Usage" in df.columns:
+
         st.metric(
             "Internet Usage",
             display_value(country_data2["Internet Usage"])
         )
 
     if "Life Expectancy Male" in df.columns:
+
         st.metric(
             "Life Expectancy Male",
             display_value(country_data2["Life Expectancy Male"])
         )
 
     if "Life Expectancy Female" in df.columns:
+
         st.metric(
             "Life Expectancy Female",
             display_value(country_data2["Life Expectancy Female"])
         )
+
 
 # =========================================================
 # CATEGORIES
@@ -247,44 +311,56 @@ with col2:
 categories = {
 
     "Population": [
+
         "Population 0-14",
         "Population 15-64",
         "Population 65+",
         "Population Total",
         "Population Urban"
+
     ],
 
     "Health": [
+
         "Health Exp % GDP",
         "Health Exp/Capita",
         "Life Expectancy Female",
         "Life Expectancy Male",
         "Infant Mortality Rate"
+
     ],
 
     "Economy": [
+
         "GDP",
         "Business Tax Rate",
         "Ease of Business",
         "Days to Start Business",
         "Hours to do Tax",
         "Lending Interest"
+
     ],
 
     "Technology": [
+
         "Internet Usage",
         "Mobile Phone Usage"
+
     ],
 
     "Environment": [
+
         "CO2 Emissions",
         "Energy Usage",
         "Birth Rate"
+
     ],
 
     "Tourism": [
+
         "Tourism Inbound",
         "Tourism Outbound"
+
     ]
 }
 
@@ -297,31 +373,53 @@ category = st.selectbox(
     list(categories.keys())
 )
 
+# =========================================================
+# FIND AVAILABLE COLUMNS
+# =========================================================
+
 available_cols = [
+
     col
+
     for col in categories[category]
+
     if col in df.columns
+
 ]
+
+missing_cols = [
+
+    col
+
+    for col in categories[category]
+
+    if col not in df.columns
+
+]
+
+if missing_cols:
+
+    st.warning(
+        "⚠️ Some indicators are not available: "
+        + ", ".join(missing_cols)
+    )
 
 if not available_cols:
 
     st.error(
-        f"❌ No indicators from the '{category}' category "
-        "were found in your Excel file."
+        "❌ No indicators are available for this category."
     )
-
-    st.write("Available Excel columns:")
-    st.write(list(df.columns))
 
     st.stop()
 
+# =========================================================
+# CATEGORY COMPARISON
+# =========================================================
+
 st.header(f"📈 {category} Comparison")
 
-# =========================================================
-# CREATE COMPARISON DATA
-# =========================================================
-
 values1 = []
+
 values2 = []
 
 for col in available_cols:
@@ -334,6 +432,10 @@ for col in available_cols:
         convert_value(country_data2[col])
     )
 
+# =========================================================
+# COMPARISON TABLE
+# =========================================================
+
 comparison_df = pd.DataFrame({
 
     "Indicator": available_cols,
@@ -341,11 +443,8 @@ comparison_df = pd.DataFrame({
     country1: values1,
 
     country2: values2
-})
 
-# =========================================================
-# COMPARISON TABLE
-# =========================================================
+})
 
 st.subheader("📋 Comparison Table")
 
@@ -356,7 +455,7 @@ st.dataframe(
 )
 
 # =========================================================
-# BAR CHART
+# VISUAL COMPARISON
 # =========================================================
 
 st.subheader("📊 Visual Comparison")
@@ -381,6 +480,7 @@ for i in range(len(available_cols)):
     indicator = available_cols[i]
 
     value1 = values1[i]
+
     value2 = values2[i]
 
     if value1 is None or value2 is None:
@@ -408,6 +508,7 @@ for i in range(len(available_cols)):
         country2: value2,
 
         "Highest Value": winner
+
     })
 
 result_df = pd.DataFrame(results)
@@ -425,15 +526,19 @@ st.dataframe(
 st.subheader("🏅 Final Comparison Result")
 
 country1_wins = 0
+
 country2_wins = 0
+
 equal_count = 0
 
 for i in range(len(available_cols)):
 
     value1 = values1[i]
+
     value2 = values2[i]
 
     if value1 is None or value2 is None:
+
         continue
 
     if value1 > value2:
@@ -447,6 +552,10 @@ for i in range(len(available_cols)):
     else:
 
         equal_count += 1
+
+# =========================================================
+# WINNING METRICS
+# =========================================================
 
 col1, col2, col3 = st.columns(3)
 
@@ -472,19 +581,21 @@ with col3:
     )
 
 # =========================================================
-# WINNER MESSAGE
+# WINNER
 # =========================================================
 
 if country1_wins > country2_wins:
 
     st.success(
-        f"🏆 {country1} has the highest value in more indicators!"
+        f"🏆 {country1} has the highest value "
+        "in more indicators!"
     )
 
 elif country2_wins > country1_wins:
 
     st.success(
-        f"🏆 {country2} has the highest value in more indicators!"
+        f"🏆 {country2} has the highest value "
+        "in more indicators!"
     )
 
 else:
@@ -494,7 +605,7 @@ else:
     )
 
 # =========================================================
-# COUNTRY DETAILS
+# COUNTRY 1 FULL DETAILS
 # =========================================================
 
 st.subheader(f"📋 {country1} Details")
@@ -504,6 +615,10 @@ st.dataframe(
     use_container_width=True,
     hide_index=True
 )
+
+# =========================================================
+# COUNTRY 2 FULL DETAILS
+# =========================================================
 
 st.subheader(f"📋 {country2} Details")
 
