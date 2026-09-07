@@ -43,7 +43,7 @@ World_development_mesurement.csv
     st.stop()
 
 try:
-    df = pd.read_csv(FILE_PATH)
+    df = pd.read_csv("C:\Users\LENOVO\Downloads\World_development_mesurement.xlsx")
 
 except Exception as e:
     st.error("❌ Could not read the CSV file.")
