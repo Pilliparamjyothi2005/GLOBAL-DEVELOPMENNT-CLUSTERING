@@ -1,10 +1,10 @@
-
+```python
 import streamlit as st
 import pandas as pd
 from pathlib import Path
 
 # =========================================================
-# PAGE CONFIGURATION
+# PAGE CONFIG
 # =========================================================
 
 st.set_page_config(
@@ -17,41 +17,36 @@ st.title("🌍 Global Development Dashboard")
 st.write("Compare development indicators between two countries.")
 
 # =========================================================
-# LOAD DATASET
+# LOAD EXCEL FILE
 # =========================================================
 
-# IMPORTANT:
-# Put World_development_mesurement.csv in the SAME folder as app.py
-
 BASE_DIR = Path(__file__).parent
-FILE_PATH = BASE_DIR / r"C:\Users\LENOVO\Downloads\World_development_mesurement.xlsx"
+
+FILE_PATH = BASE_DIR / "World_development_mesurement.xlsx"
+
 if not FILE_PATH.exists():
     st.error("❌ Dataset file not found.")
-    st.info(
-        "Make sure World_development_mesurement.csv "
-        "is in the same GitHub folder as app.py."
-    )
+
+    st.write("Your GitHub repository must contain:")
 
     st.code("""
-Your GitHub repository should contain:
-
 app.py
 requirements.txt
-World_development_mesurement.csv
+World_development_mesurement.xlsx
 """)
 
     st.stop()
 
 try:
-    df = pd.read_csv(r"C:\Users\LENOVO\Downloads\World_development_mesurement.xlsx")
+    df = pd.read_excel(FILE_PATH)
 
 except Exception as e:
-    st.error("❌ Could not read the CSV file.")
-    st.error(f"Error: {e}")
+    st.error("❌ Could not read the Excel file.")
+    st.error(str(e))
     st.stop()
 
 # =========================================================
-# CLEAN DATA
+# CLEAN COLUMN NAMES
 # =========================================================
 
 df.columns = (
@@ -60,14 +55,20 @@ df.columns = (
     .str.strip()
 )
 
+# =========================================================
+# CHECK DATA
+# =========================================================
+
 if df.empty:
     st.error("❌ Dataset is empty.")
     st.stop()
 
 if "Country" not in df.columns:
-    st.error("❌ 'Country' column is missing.")
-    st.write("Columns found:")
+    st.error("❌ 'Country' column was not found.")
+
+    st.write("Columns available in your dataset:")
     st.write(list(df.columns))
+
     st.stop()
 
 # =========================================================
@@ -110,6 +111,7 @@ with col2:
 
 if country1 == country2:
     st.warning("⚠️ Please select two different countries.")
+    st.stop()
 
 # =========================================================
 # GET COUNTRY DATA
@@ -123,15 +125,19 @@ data2 = df[
     df["Country"].astype(str).str.strip() == country2
 ]
 
-if data1.empty or data2.empty:
-    st.error("❌ Country data not available.")
+if data1.empty:
+    st.error(f"❌ No data found for {country1}.")
+    st.stop()
+
+if data2.empty:
+    st.error(f"❌ No data found for {country2}.")
     st.stop()
 
 country_data1 = data1.iloc[0]
 country_data2 = data2.iloc[0]
 
 # =========================================================
-# CONVERT VALUES
+# CONVERT VALUES TO NUMBERS
 # =========================================================
 
 def convert_value(value):
@@ -149,15 +155,16 @@ def convert_value(value):
             .strip()
         )
 
+        if value == "":
+            return None
+
         try:
             return float(value)
-
         except ValueError:
             return None
 
     try:
         return float(value)
-
     except (ValueError, TypeError):
         return None
 
@@ -172,7 +179,6 @@ def display_value(value):
 
     return str(value)
 
-
 # =========================================================
 # BASIC COUNTRY INFORMATION
 # =========================================================
@@ -181,17 +187,19 @@ st.header("📊 Country Comparison")
 
 col1, col2 = st.columns(2)
 
+basic_indicators = [
+    "GDP",
+    "Population Total",
+    "Internet Usage",
+    "Life Expectancy Male",
+    "Life Expectancy Female"
+]
+
 with col1:
 
     st.subheader(f"🌍 {country1}")
 
-    for indicator in [
-        "GDP",
-        "Population Total",
-        "Internet Usage",
-        "Life Expectancy Male",
-        "Life Expectancy Female"
-    ]:
+    for indicator in basic_indicators:
 
         if indicator in df.columns:
 
@@ -200,18 +208,11 @@ with col1:
                 display_value(country_data1[indicator])
             )
 
-
 with col2:
 
     st.subheader(f"🌍 {country2}")
 
-    for indicator in [
-        "GDP",
-        "Population Total",
-        "Internet Usage",
-        "Life Expectancy Male",
-        "Life Expectancy Female"
-    ]:
+    for indicator in basic_indicators:
 
         if indicator in df.columns:
 
@@ -220,7 +221,6 @@ with col2:
                 display_value(country_data2[indicator])
             )
 
-
 # =========================================================
 # DEVELOPMENT CLUSTERS
 # =========================================================
@@ -228,6 +228,7 @@ with col2:
 clusters = {
 
     "Cluster 1 - Social Development": [
+
         "Population 0-14",
         "Population 15-64",
         "Population 65+",
@@ -236,9 +237,11 @@ clusters = {
         "Life Expectancy Female",
         "Life Expectancy Male",
         "Infant Mortality Rate"
+
     ],
 
     "Cluster 2 - Economic & Technology Development": [
+
         "GDP",
         "Business Tax Rate",
         "Ease of Business",
@@ -249,94 +252,114 @@ clusters = {
         "Mobile Phone Usage",
         "Health Exp % GDP",
         "Health Exp/Capita"
+
     ],
 
     "Cluster 3 - Environment & Tourism": [
+
         "CO2 Emissions",
         "Energy Usage",
         "Birth Rate",
         "Tourism Inbound",
         "Tourism Outbound"
+
     ]
 }
 
 # =========================================================
-# CLUSTER SELECTION
+# SELECT TWO CLUSTERS
 # =========================================================
 
 st.header("🔬 Development Cluster Comparison")
 
-cluster1, cluster2 = st.columns(2)
+cluster_names = list(clusters.keys())
 
-with cluster1:
+col1, col2 = st.columns(2)
+
+with col1:
 
     selected_cluster1 = st.selectbox(
         "Select First Cluster",
-        list(clusters.keys()),
+        cluster_names,
         index=0
     )
 
-with cluster2:
+with col2:
 
     selected_cluster2 = st.selectbox(
         "Select Second Cluster",
-        list(clusters.keys()),
+        cluster_names,
         index=1
     )
 
-
 # =========================================================
-# FUNCTION TO CREATE CLUSTER TABLE
+# CREATE COMPARISON
 # =========================================================
 
-def create_cluster_table(cluster_name):
+def create_comparison(cluster_name):
 
-    indicators = [
-        indicator
-        for indicator in clusters[cluster_name]
-        if indicator in df.columns
-    ]
+    indicators = []
+
+    for indicator in clusters[cluster_name]:
+
+        if indicator in df.columns:
+            indicators.append(indicator)
 
     rows = []
 
     for indicator in indicators:
 
-        value1 = convert_value(country_data1[indicator])
-        value2 = convert_value(country_data2[indicator])
+        value1 = convert_value(
+            country_data1[indicator]
+        )
+
+        value2 = convert_value(
+            country_data2[indicator]
+        )
 
         if value1 is None or value2 is None:
+
             winner = "N/A"
 
         elif value1 > value2:
+
             winner = country1
 
         elif value2 > value1:
+
             winner = country2
 
         else:
+
             winner = "Equal"
 
         rows.append({
+
             "Indicator": indicator,
             country1: value1,
             country2: value2,
             "Higher Value": winner
+
         })
 
     return pd.DataFrame(rows)
 
-
 # =========================================================
-# CLUSTER 1 COMPARISON
+# FIRST CLUSTER
 # =========================================================
 
 st.subheader(f"📈 {selected_cluster1}")
 
-cluster_df1 = create_cluster_table(selected_cluster1)
+cluster_df1 = create_comparison(
+    selected_cluster1
+)
 
 if cluster_df1.empty:
 
-    st.warning("⚠️ No indicators available for this cluster.")
+    st.warning(
+        "No indicators from this cluster "
+        "were found in the dataset."
+    )
 
 else:
 
@@ -346,18 +369,22 @@ else:
         hide_index=True
     )
 
-
 # =========================================================
-# CLUSTER 2 COMPARISON
+# SECOND CLUSTER
 # =========================================================
 
 st.subheader(f"📈 {selected_cluster2}")
 
-cluster_df2 = create_cluster_table(selected_cluster2)
+cluster_df2 = create_comparison(
+    selected_cluster2
+)
 
 if cluster_df2.empty:
 
-    st.warning("⚠️ No indicators available for this cluster.")
+    st.warning(
+        "No indicators from this cluster "
+        "were found in the dataset."
+    )
 
 else:
 
@@ -367,36 +394,34 @@ else:
         hide_index=True
     )
 
-
 # =========================================================
-# VISUAL COMPARISON
+# CHART
 # =========================================================
 
 st.header("📊 Visual Comparison")
 
 if not cluster_df1.empty:
 
-    chart_data = cluster_df1.set_index("Indicator")[
-        [country1, country2]
-    ]
+    chart_data = cluster_df1.set_index(
+        "Indicator"
+    )[[country1, country2]]
 
     st.bar_chart(
         chart_data,
         use_container_width=True
     )
 
-
 # =========================================================
-# CLUSTER WINNER FUNCTION
+# CALCULATE WINS
 # =========================================================
 
-def calculate_wins(cluster_df):
+def calculate_wins(comparison_df):
 
     country1_wins = 0
     country2_wins = 0
-    equal = 0
+    equal_count = 0
 
-    for _, row in cluster_df.iterrows():
+    for _, row in comparison_df.iterrows():
 
         value1 = row[country1]
         value2 = row[country2]
@@ -405,16 +430,22 @@ def calculate_wins(cluster_df):
             continue
 
         if value1 > value2:
+
             country1_wins += 1
 
         elif value2 > value1:
+
             country2_wins += 1
 
         else:
-            equal += 1
 
-    return country1_wins, country2_wins, equal
+            equal_count += 1
 
+    return (
+        country1_wins,
+        country2_wins,
+        equal_count
+    )
 
 # =========================================================
 # CLUSTER RESULTS
@@ -422,119 +453,134 @@ def calculate_wins(cluster_df):
 
 st.header("🏆 Cluster Results")
 
+total_country1 = 0
+total_country2 = 0
+total_equal = 0
+
 if not cluster_df1.empty:
 
-    wins1, wins2, equal1 = calculate_wins(cluster_df1)
+    w1, w2, e1 = calculate_wins(
+        cluster_df1
+    )
+
+    total_country1 += w1
+    total_country2 += w2
+    total_equal += e1
+
+    st.subheader(
+        f"🏅 {selected_cluster1}"
+    )
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
         st.metric(
-            f"{country1} Wins",
-            wins1
+            f"🏆 {country1} Wins",
+            w1
         )
 
     with col2:
         st.metric(
-            f"{country2} Wins",
-            wins2
+            f"🏆 {country2} Wins",
+            w2
         )
 
     with col3:
-        st.metric(
-            "Equal",
-            equal1
-        )
-
-    if wins1 > wins2:
-
-        st.success(
-            f"🏆 {country1} performs higher in more "
-            f"indicators in {selected_cluster1}."
-        )
-
-    elif wins2 > wins1:
-
-        st.success(
-            f"🏆 {country2} performs higher in more "
-            f"indicators in {selected_cluster1}."
-        )
-
-    else:
-
-        st.info(
-            "🤝 Both countries have the same number of wins."
-        )
-
-
-# =========================================================
-# FINAL TWO-CLUSTER COMPARISON
-# =========================================================
-
-st.header("🎯 Final Two-Cluster Comparison")
-
-if not cluster_df1.empty and not cluster_df2.empty:
-
-    c1_wins_1, c2_wins_1, equal_1 = calculate_wins(cluster_df1)
-
-    c1_wins_2, c2_wins_2, equal_2 = calculate_wins(cluster_df2)
-
-    total_country1 = c1_wins_1 + c1_wins_2
-    total_country2 = c2_wins_1 + c2_wins_2
-    total_equal = equal_1 + equal_2
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-
-        st.metric(
-            f"🏆 {country1}",
-            total_country1
-        )
-
-    with col2:
-
-        st.metric(
-            f"🏆 {country2}",
-            total_country2
-        )
-
-    with col3:
-
         st.metric(
             "🤝 Equal",
-            total_equal
+            e1
         )
 
-    if total_country1 > total_country2:
+if not cluster_df2.empty:
 
-        st.success(
-            f"🏆 Overall result: {country1} "
-            f"has the higher value in more indicators "
-            f"across the two selected clusters."
+    w1, w2, e1 = calculate_wins(
+        cluster_df2
+    )
+
+    total_country1 += w1
+    total_country2 += w2
+    total_equal += e1
+
+    st.subheader(
+        f"🏅 {selected_cluster2}"
+    )
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            f"🏆 {country1} Wins",
+            w1
         )
 
-    elif total_country2 > total_country1:
-
-        st.success(
-            f"🏆 Overall result: {country2} "
-            f"has the higher value in more indicators "
-            f"across the two selected clusters."
+    with col2:
+        st.metric(
+            f"🏆 {country2} Wins",
+            w2
         )
 
-    else:
-
-        st.info(
-            "🤝 Overall result: Both countries have "
-            "the same number of higher indicators."
+    with col3:
+        st.metric(
+            "🤝 Equal",
+            e1
         )
 
+# =========================================================
+# FINAL RESULT
+# =========================================================
+
+st.header("🎯 Final Two-Cluster Result")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+
+    st.metric(
+        f"🏆 {country1}",
+        total_country1
+    )
+
+with col2:
+
+    st.metric(
+        f"🏆 {country2}",
+        total_country2
+    )
+
+with col3:
+
+    st.metric(
+        "🤝 Equal",
+        total_equal
+    )
+
+if total_country1 > total_country2:
+
+    st.success(
+        f"🥇 Overall Winner: {country1}"
+    )
+
+elif total_country2 > total_country1:
+
+    st.success(
+        f"🥇 Overall Winner: {country2}"
+    )
+
+else:
+
+    st.info(
+        "🤝 Overall Result: Tie"
+    )
 
 # =========================================================
 # FULL DATA
 # =========================================================
 
-with st.expander(f"📋 Show {country1} Full Data"):
+st.header("📋 Full Country Data")
+
+with st.expander(
+    f"Show complete data for {country1}"
+):
 
     st.dataframe(
         data1,
@@ -542,11 +588,52 @@ with st.expander(f"📋 Show {country1} Full Data"):
         hide_index=True
     )
 
-
-with st.expander(f"📋 Show {country2} Full Data"):
+with st.expander(
+    f"Show complete data for {country2}"
+):
 
     st.dataframe(
         data2,
         use_container_width=True,
         hide_index=True
     )
+
+# =========================================================
+# FOOTER
+# =========================================================
+
+st.markdown("---")
+
+st.caption(
+    "🌍 Global Development Dashboard | "
+    "Two Country & Two Cluster Comparison"
+)
+```
+
+### `requirements.txt`
+
+Because this version reads an **Excel `.xlsx` file**, your `requirements.txt` needs `openpyxl`:
+
+```text
+streamlit
+pandas
+openpyxl
+```
+
+### ⚠️ One important thing
+
+You must upload **the actual Excel file** to GitHub:
+
+```text
+World_development_mesurement.xlsx
+```
+
+Do **not** use your computer path:
+
+```text
+C:\Users\LENOVO\Downloads\...
+```
+
+The current code you showed still contains that local path, which is the reason the error continues.
+
+If your GitHub currently has **`World_development_mesurement.csv` instead of `.xlsx`**, tell me and I'll give you the exact CSV version.
