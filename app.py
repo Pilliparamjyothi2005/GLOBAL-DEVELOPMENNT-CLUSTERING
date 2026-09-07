@@ -23,7 +23,7 @@ st.write("Compare development indicators between two countries.")
 # LOAD CSV DATASET
 # =========================================================
 
-FILE_NAME = "World_development_mesurement.csv"
+FILE_NAME = (r"C:\Users\LENOVO\AppData\Local\Packages\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\LocalState\sessions\7FEC2538D97D842B5E57A9DF5384D5CC11D4B28C\transfers\2026-36\World_development_mesurement.xlsx")
 FILE_PATH = Path(__file__).parent / FILE_NAME
 
 if not FILE_PATH.exists():
