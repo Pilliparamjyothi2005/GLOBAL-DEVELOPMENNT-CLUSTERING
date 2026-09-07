@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 import pandas as pd
 from pathlib import Path
@@ -12,53 +13,46 @@ st.set_page_config(
     layout="wide"
 )
 
-# =========================================================
-# TITLE
-# =========================================================
-
 st.title("🌍 Global Development Dashboard")
 st.write("Compare development indicators between two countries.")
 
 # =========================================================
-# LOAD CSV DATASET
+# LOAD DATASET
 # =========================================================
 
-FILE_NAME = (r"C:\Users\LENOVO\AppData\Local\Packages\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\LocalState\sessions\7FEC2538D97D842B5E57A9DF5384D5CC11D4B28C\transfers\2026-36\World_development_mesurement.xlsx")
-FILE_PATH = Path(__file__).parent / FILE_NAME
+# IMPORTANT:
+# Put World_development_mesurement.csv in the SAME folder as app.py
+
+BASE_DIR = Path(__file__).parent
+FILE_PATH = BASE_DIR / "World_development_mesurement.csv"
 
 if not FILE_PATH.exists():
     st.error("❌ Dataset file not found.")
+    st.info(
+        "Make sure World_development_mesurement.csv "
+        "is in the same GitHub folder as app.py."
+    )
 
-    st.write("Please make sure this file is in the same GitHub folder as app.py:")
+    st.code("""
+Your GitHub repository should contain:
 
-    st.code(FILE_NAME)
-
-    st.write("Your GitHub repository should contain:")
-
-    st.code(
-        """
 app.py
 requirements.txt
 World_development_mesurement.csv
-"""
-    )
+""")
 
     st.stop()
 
 try:
-
     df = pd.read_csv(FILE_PATH)
 
 except Exception as e:
-
     st.error("❌ Could not read the CSV file.")
-
     st.error(f"Error: {e}")
-
     st.stop()
 
 # =========================================================
-# CLEAN COLUMN NAMES
+# CLEAN DATA
 # =========================================================
 
 df.columns = (
@@ -67,24 +61,14 @@ df.columns = (
     .str.strip()
 )
 
-# =========================================================
-# CHECK DATASET
-# =========================================================
-
 if df.empty:
-
-    st.error("❌ The dataset is empty.")
-
+    st.error("❌ Dataset is empty.")
     st.stop()
 
 if "Country" not in df.columns:
-
-    st.error("❌ The dataset does not contain a 'Country' column.")
-
-    st.write("Columns found in your dataset:")
-
+    st.error("❌ 'Country' column is missing.")
+    st.write("Columns found:")
     st.write(list(df.columns))
-
     st.stop()
 
 # =========================================================
@@ -100,21 +84,18 @@ countries = sorted(
 )
 
 if len(countries) < 2:
-
     st.error("❌ At least two countries are required.")
-
     st.stop()
 
 # =========================================================
-# COUNTRY SELECTION
+# SELECT TWO COUNTRIES
 # =========================================================
 
-st.subheader("🌎 Select Two Countries for Comparison")
+st.header("🌎 Select Two Countries")
 
 col1, col2 = st.columns(2)
 
 with col1:
-
     country1 = st.selectbox(
         "Select First Country",
         countries,
@@ -122,12 +103,14 @@ with col1:
     )
 
 with col2:
-
     country2 = st.selectbox(
         "Select Second Country",
         countries,
         index=1
     )
+
+if country1 == country2:
+    st.warning("⚠️ Please select two different countries.")
 
 # =========================================================
 # GET COUNTRY DATA
@@ -141,26 +124,15 @@ data2 = df[
     df["Country"].astype(str).str.strip() == country2
 ]
 
-if data1.empty:
-
-    st.error(f"❌ No data found for {country1}.")
-
+if data1.empty or data2.empty:
+    st.error("❌ Country data not available.")
     st.stop()
-
-if data2.empty:
-
-    st.error(f"❌ No data found for {country2}.")
-
-    st.stop()
-
-# Use first row if multiple rows exist
 
 country_data1 = data1.iloc[0]
-
 country_data2 = data2.iloc[0]
 
 # =========================================================
-# HELPER FUNCTION
+# CONVERT VALUES
 # =========================================================
 
 def convert_value(value):
@@ -179,30 +151,24 @@ def convert_value(value):
         )
 
         try:
-
             return float(value)
 
         except ValueError:
-
             return None
 
     try:
-
         return float(value)
 
     except (ValueError, TypeError):
-
         return None
 
 
 def display_value(value):
 
     if pd.isna(value):
-
         return "N/A"
 
     if isinstance(value, (int, float)):
-
         return f"{value:,.2f}"
 
     return str(value)
@@ -216,414 +182,382 @@ st.header("📊 Country Comparison")
 
 col1, col2 = st.columns(2)
 
-# =========================================================
-# COUNTRY 1
-# =========================================================
-
 with col1:
 
     st.subheader(f"🌍 {country1}")
 
-    if "GDP" in df.columns:
+    for indicator in [
+        "GDP",
+        "Population Total",
+        "Internet Usage",
+        "Life Expectancy Male",
+        "Life Expectancy Female"
+    ]:
 
-        st.metric(
-            "GDP",
-            display_value(country_data1["GDP"])
-        )
+        if indicator in df.columns:
 
-    if "Population Total" in df.columns:
+            st.metric(
+                indicator,
+                display_value(country_data1[indicator])
+            )
 
-        st.metric(
-            "Population",
-            display_value(country_data1["Population Total"])
-        )
-
-    if "Internet Usage" in df.columns:
-
-        st.metric(
-            "Internet Usage",
-            display_value(country_data1["Internet Usage"])
-        )
-
-    if "Life Expectancy Male" in df.columns:
-
-        st.metric(
-            "Life Expectancy Male",
-            display_value(country_data1["Life Expectancy Male"])
-        )
-
-    if "Life Expectancy Female" in df.columns:
-
-        st.metric(
-            "Life Expectancy Female",
-            display_value(country_data1["Life Expectancy Female"])
-        )
-
-
-# =========================================================
-# COUNTRY 2
-# =========================================================
 
 with col2:
 
     st.subheader(f"🌍 {country2}")
 
-    if "GDP" in df.columns:
+    for indicator in [
+        "GDP",
+        "Population Total",
+        "Internet Usage",
+        "Life Expectancy Male",
+        "Life Expectancy Female"
+    ]:
 
-        st.metric(
-            "GDP",
-            display_value(country_data2["GDP"])
-        )
+        if indicator in df.columns:
 
-    if "Population Total" in df.columns:
-
-        st.metric(
-            "Population",
-            display_value(country_data2["Population Total"])
-        )
-
-    if "Internet Usage" in df.columns:
-
-        st.metric(
-            "Internet Usage",
-            display_value(country_data2["Internet Usage"])
-        )
-
-    if "Life Expectancy Male" in df.columns:
-
-        st.metric(
-            "Life Expectancy Male",
-            display_value(country_data2["Life Expectancy Male"])
-        )
-
-    if "Life Expectancy Female" in df.columns:
-
-        st.metric(
-            "Life Expectancy Female",
-            display_value(country_data2["Life Expectancy Female"])
-        )
+            st.metric(
+                indicator,
+                display_value(country_data2[indicator])
+            )
 
 
 # =========================================================
-# CATEGORIES
+# DEVELOPMENT CLUSTERS
 # =========================================================
 
-categories = {
+clusters = {
 
-    "Population": [
-
+    "Cluster 1 - Social Development": [
         "Population 0-14",
         "Population 15-64",
         "Population 65+",
         "Population Total",
-        "Population Urban"
-
-    ],
-
-    "Health": [
-
-        "Health Exp % GDP",
-        "Health Exp/Capita",
+        "Population Urban",
         "Life Expectancy Female",
         "Life Expectancy Male",
         "Infant Mortality Rate"
-
     ],
 
-    "Economy": [
-
+    "Cluster 2 - Economic & Technology Development": [
         "GDP",
         "Business Tax Rate",
         "Ease of Business",
         "Days to Start Business",
         "Hours to do Tax",
-        "Lending Interest"
-
-    ],
-
-    "Technology": [
-
+        "Lending Interest",
         "Internet Usage",
-        "Mobile Phone Usage"
-
+        "Mobile Phone Usage",
+        "Health Exp % GDP",
+        "Health Exp/Capita"
     ],
 
-    "Environment": [
-
+    "Cluster 3 - Environment & Tourism": [
         "CO2 Emissions",
         "Energy Usage",
-        "Birth Rate"
-
-    ],
-
-    "Tourism": [
-
+        "Birth Rate",
         "Tourism Inbound",
         "Tourism Outbound"
-
     ]
 }
 
 # =========================================================
-# CATEGORY SELECTION
+# CLUSTER SELECTION
 # =========================================================
 
-category = st.selectbox(
-    "📂 Select Category",
-    list(categories.keys())
-)
+st.header("🔬 Development Cluster Comparison")
 
-# =========================================================
-# FIND AVAILABLE COLUMNS
-# =========================================================
+cluster1, cluster2 = st.columns(2)
 
-available_cols = [
+with cluster1:
 
-    col
-
-    for col in categories[category]
-
-    if col in df.columns
-
-]
-
-missing_cols = [
-
-    col
-
-    for col in categories[category]
-
-    if col not in df.columns
-
-]
-
-if missing_cols:
-
-    st.warning(
-        "⚠️ Some indicators are not available: "
-        + ", ".join(missing_cols)
+    selected_cluster1 = st.selectbox(
+        "Select First Cluster",
+        list(clusters.keys()),
+        index=0
     )
 
-if not available_cols:
+with cluster2:
 
-    st.error(
-        "❌ No indicators are available for this category."
+    selected_cluster2 = st.selectbox(
+        "Select Second Cluster",
+        list(clusters.keys()),
+        index=1
     )
 
-    st.stop()
 
 # =========================================================
-# CATEGORY COMPARISON
+# FUNCTION TO CREATE CLUSTER TABLE
 # =========================================================
 
-st.header(f"📈 {category} Comparison")
+def create_cluster_table(cluster_name):
 
-values1 = []
+    indicators = [
+        indicator
+        for indicator in clusters[cluster_name]
+        if indicator in df.columns
+    ]
 
-values2 = []
+    rows = []
 
-for col in available_cols:
+    for indicator in indicators:
 
-    values1.append(
-        convert_value(country_data1[col])
+        value1 = convert_value(country_data1[indicator])
+        value2 = convert_value(country_data2[indicator])
+
+        if value1 is None or value2 is None:
+            winner = "N/A"
+
+        elif value1 > value2:
+            winner = country1
+
+        elif value2 > value1:
+            winner = country2
+
+        else:
+            winner = "Equal"
+
+        rows.append({
+            "Indicator": indicator,
+            country1: value1,
+            country2: value2,
+            "Higher Value": winner
+        })
+
+    return pd.DataFrame(rows)
+
+
+# =========================================================
+# CLUSTER 1 COMPARISON
+# =========================================================
+
+st.subheader(f"📈 {selected_cluster1}")
+
+cluster_df1 = create_cluster_table(selected_cluster1)
+
+if cluster_df1.empty:
+
+    st.warning("⚠️ No indicators available for this cluster.")
+
+else:
+
+    st.dataframe(
+        cluster_df1,
+        use_container_width=True,
+        hide_index=True
     )
 
-    values2.append(
-        convert_value(country_data2[col])
+
+# =========================================================
+# CLUSTER 2 COMPARISON
+# =========================================================
+
+st.subheader(f"📈 {selected_cluster2}")
+
+cluster_df2 = create_cluster_table(selected_cluster2)
+
+if cluster_df2.empty:
+
+    st.warning("⚠️ No indicators available for this cluster.")
+
+else:
+
+    st.dataframe(
+        cluster_df2,
+        use_container_width=True,
+        hide_index=True
     )
 
-# =========================================================
-# COMPARISON TABLE
-# =========================================================
-
-comparison_df = pd.DataFrame({
-
-    "Indicator": available_cols,
-
-    country1: values1,
-
-    country2: values2
-
-})
-
-st.subheader("📋 Comparison Table")
-
-st.dataframe(
-    comparison_df,
-    use_container_width=True,
-    hide_index=True
-)
 
 # =========================================================
 # VISUAL COMPARISON
 # =========================================================
 
-st.subheader("📊 Visual Comparison")
+st.header("📊 Visual Comparison")
 
-chart_df = comparison_df.set_index("Indicator")
+if not cluster_df1.empty:
 
-st.bar_chart(
-    chart_df,
-    use_container_width=True
-)
+    chart_data = cluster_df1.set_index("Indicator")[
+        [country1, country2]
+    ]
+
+    st.bar_chart(
+        chart_data,
+        use_container_width=True
+    )
+
 
 # =========================================================
-# HIGHEST VALUE COMPARISON
+# CLUSTER WINNER FUNCTION
 # =========================================================
 
-st.subheader("🏆 Highest Value Comparison")
+def calculate_wins(cluster_df):
 
-results = []
+    country1_wins = 0
+    country2_wins = 0
+    equal = 0
 
-for i in range(len(available_cols)):
+    for _, row in cluster_df.iterrows():
 
-    indicator = available_cols[i]
+        value1 = row[country1]
+        value2 = row[country2]
 
-    value1 = values1[i]
+        if pd.isna(value1) or pd.isna(value2):
+            continue
 
-    value2 = values2[i]
+        if value1 > value2:
+            country1_wins += 1
 
-    if value1 is None or value2 is None:
+        elif value2 > value1:
+            country2_wins += 1
 
-        winner = "N/A"
+        else:
+            equal += 1
 
-    elif value1 > value2:
+    return country1_wins, country2_wins, equal
 
-        winner = country1
 
-    elif value2 > value1:
+# =========================================================
+# CLUSTER RESULTS
+# =========================================================
 
-        winner = country2
+st.header("🏆 Cluster Results")
+
+if not cluster_df1.empty:
+
+    wins1, wins2, equal1 = calculate_wins(cluster_df1)
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            f"{country1} Wins",
+            wins1
+        )
+
+    with col2:
+        st.metric(
+            f"{country2} Wins",
+            wins2
+        )
+
+    with col3:
+        st.metric(
+            "Equal",
+            equal1
+        )
+
+    if wins1 > wins2:
+
+        st.success(
+            f"🏆 {country1} performs higher in more "
+            f"indicators in {selected_cluster1}."
+        )
+
+    elif wins2 > wins1:
+
+        st.success(
+            f"🏆 {country2} performs higher in more "
+            f"indicators in {selected_cluster1}."
+        )
 
     else:
 
-        winner = "Equal"
+        st.info(
+            "🤝 Both countries have the same number of wins."
+        )
 
-    results.append({
-
-        "Indicator": indicator,
-
-        country1: value1,
-
-        country2: value2,
-
-        "Highest Value": winner
-
-    })
-
-result_df = pd.DataFrame(results)
-
-st.dataframe(
-    result_df,
-    use_container_width=True,
-    hide_index=True
-)
 
 # =========================================================
-# FINAL RESULT
+# FINAL TWO-CLUSTER COMPARISON
 # =========================================================
 
-st.subheader("🏅 Final Comparison Result")
+st.header("🎯 Final Two-Cluster Comparison")
 
-country1_wins = 0
+if not cluster_df1.empty and not cluster_df2.empty:
 
-country2_wins = 0
+    c1_wins_1, c2_wins_1, equal_1 = calculate_wins(cluster_df1)
 
-equal_count = 0
+    c1_wins_2, c2_wins_2, equal_2 = calculate_wins(cluster_df2)
 
-for i in range(len(available_cols)):
+    total_country1 = c1_wins_1 + c1_wins_2
+    total_country2 = c2_wins_1 + c2_wins_2
+    total_equal = equal_1 + equal_2
 
-    value1 = values1[i]
+    col1, col2, col3 = st.columns(3)
 
-    value2 = values2[i]
+    with col1:
 
-    if value1 is None or value2 is None:
+        st.metric(
+            f"🏆 {country1}",
+            total_country1
+        )
 
-        continue
+    with col2:
 
-    if value1 > value2:
+        st.metric(
+            f"🏆 {country2}",
+            total_country2
+        )
 
-        country1_wins += 1
+    with col3:
 
-    elif value2 > value1:
+        st.metric(
+            "🤝 Equal",
+            total_equal
+        )
 
-        country2_wins += 1
+    if total_country1 > total_country2:
+
+        st.success(
+            f"🏆 Overall result: {country1} "
+            f"has the higher value in more indicators "
+            f"across the two selected clusters."
+        )
+
+    elif total_country2 > total_country1:
+
+        st.success(
+            f"🏆 Overall result: {country2} "
+            f"has the higher value in more indicators "
+            f"across the two selected clusters."
+        )
 
     else:
 
-        equal_count += 1
+        st.info(
+            "🤝 Overall result: Both countries have "
+            "the same number of higher indicators."
+        )
+
 
 # =========================================================
-# WINNING METRICS
+# FULL DATA
 # =========================================================
 
-col1, col2, col3 = st.columns(3)
+with st.expander(f"📋 Show {country1} Full Data"):
 
-with col1:
-
-    st.metric(
-        f"🏆 {country1} Wins",
-        country1_wins
+    st.dataframe(
+        data1,
+        use_container_width=True,
+        hide_index=True
     )
 
-with col2:
 
-    st.metric(
-        f"🏆 {country2} Wins",
-        country2_wins
+with st.expander(f"📋 Show {country2} Full Data"):
+
+    st.dataframe(
+        data2,
+        use_container_width=True,
+        hide_index=True
     )
+```
 
-with col3:
+### `requirements.txt`
 
-    st.metric(
-        "🤝 Equal",
-        equal_count
-    )
+Use this:
 
-# =========================================================
-# WINNER
-# =========================================================
-
-if country1_wins > country2_wins:
-
-    st.success(
-        f"🏆 {country1} has the highest value "
-        "in more indicators!"
-    )
-
-elif country2_wins > country1_wins:
-
-    st.success(
-        f"🏆 {country2} has the highest value "
-        "in more indicators!"
-    )
-
-else:
-
-    st.info(
-        "🤝 Both countries have an equal number of wins!"
-    )
-
-# =========================================================
-# COUNTRY 1 FULL DETAILS
-# =========================================================
-
-st.subheader(f"📋 {country1} Details")
-
-st.dataframe(
-    data1,
-    use_container_width=True,
-    hide_index=True
-)
-
-# =========================================================
-# COUNTRY 2 FULL DETAILS
-# =========================================================
-
-st.subheader(f"📋 {country2} Details")
-
-st.dataframe(
-    data2,
-    use_container_width=True,
-    hide_index=True
-)
+```text
+streamlit
+pandas
+```
