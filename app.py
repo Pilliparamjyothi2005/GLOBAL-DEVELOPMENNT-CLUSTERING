@@ -551,13 +551,3 @@ with st.expander(f"📋 Show {country2} Full Data"):
         use_container_width=True,
         hide_index=True
     )
-```
-
-### `requirements.txt`
-
-Use this:
-
-```text
-streamlit
-pandas
-```
