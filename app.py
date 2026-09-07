@@ -19,7 +19,7 @@ st.write("Compare development indicators between two countries.")
 # --------------------------------------------------
 
 try:
-    df = pd.read_excel("C:\Users\LENOVO\Downloads\World_development_mesurement.xlsx")
+    df = pd.read_excel("C:\\Users\LENOVO\\Downloads\\World_development_mesurement.xlsx")
 except Exception as e:
     st.error("❌ Could not load the Excel file.")
     st.error(f"Error: {e}")
